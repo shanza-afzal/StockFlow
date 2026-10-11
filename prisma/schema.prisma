@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AccountType {
+  CUSTOMER
+  SUPPLIER
+  BOTH
+  CAPITAL
+  EXPENSE
+}
+
+enum BillType {
+  SALE
+  PURCHASE
+}
+
+enum PaymentMode {
+  CASH
+  CREDIT
+}
+
+model Item {
+  id            Int      @id @default(autoincrement())
+  name          String   @unique
+  unit          String   @default("pcs")
+  purchasePrice Float    @default(0)
+  salePrice     Float    @default(0)
+  openingStock  Float    @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  billItems BillItem[]
+
+  @@index([name])
+}
+
+model Account {
+  id             Int         @id @default(autoincrement())
+  name           String
+  type           AccountType @default(BOTH)
+  phone          String?
+  address        String?
+  openingBalance Float       @default(0)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  bills        Bill[]
+  entriesFrom  AmountEntry[] @relation("EntryFrom")
+  entriesTo    AmountEntry[] @relation("EntryTo")
+
+  @@index([name])
+}
+
+model Bill {
+  id          Int         @id @default(autoincrement())
+  billNo      Int
+  type        BillType
+  date        DateTime
+  mode        PaymentMode
+  accountId   Int?
+  account     Account?    @relation(fields: [accountId], references: [id])
+  total       Float
+  paidAmount  Float       @default(0)
+  notes       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  items BillItem[]
+
+  @@index([type, date])
+  @@index([accountId])
+}
+
+model BillItem {
+  id        Int    @id @default(autoincrement())
+  billId    Int
+  bill      Bill   @relation(fields: [billId], references: [id], onDelete: Cascade)
+  itemId    Int
+  item      Item   @relation(fields: [itemId], references: [id])
+  qty       Float
+  price     Float
+  costPrice Float  @default(0)
+  subtotal  Float
+
+  @@index([billId])
+  @@index([itemId])
+}
+
+model AmountEntry {
+  id            Int      @id @default(autoincrement())
+  jvNo          Int
+  date          DateTime
+  fromAccountId Int?
+  fromAccount   Account? @relation("EntryFrom", fields: [fromAccountId], references: [id])
+  toAccountId   Int?
+  toAccount     Account? @relation("EntryTo", fields: [toAccountId], references: [id])
+  amount        Float
+  description   String?
+  createdAt     DateTime @default(now())
+
+  @@index([date])
+  @@index([jvNo])
+  @@index([fromAccountId])
+  @@index([toAccountId])
+}
+
+model Settings {
+  id           Int    @id @default(autoincrement())
+  companyName  String @default("Safi ERP")
+  currency     String @default("Rs.")
+  address      String?
+  phone        String?
+  nextSaleNo   Int    @default(1)
+  nextPurchNo  Int    @default(1)
+  nextJvNo     Int    @default(1)
+}
