@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAccountsWithBalances, getCashBook, getStockList } from "@/lib/calc";
+import { stockLevel } from "@/lib/stockLevel";
 
 function startOfToday() {
   // Bill dates come from <input type="date"> and are parsed as UTC midnight
@@ -32,7 +33,9 @@ export async function GET() {
   const receivable = accounts.filter((a) => a.balance > 0).reduce((s, a) => s + a.balance, 0);
   const payable = accounts.filter((a) => a.balance < 0).reduce((s, a) => s + -a.balance, 0);
   const cashBalance = cashBook.length ? cashBook[cashBook.length - 1].balance : 0;
-  const lowStockCount = stock.filter((s) => s.stock <= 5).length;
+  const lowStockItems = stock
+    .filter((s) => stockLevel(s.stock) !== "OK")
+    .map(({ id, name, unit, stock }) => ({ id, name, unit, stock }));
   const stockValue = stock.reduce((s, r) => s + r.value, 0);
 
   return NextResponse.json({
@@ -41,7 +44,7 @@ export async function GET() {
     cashBalance,
     receivable,
     payable,
-    lowStockCount,
+    lowStockItems,
     stockValue,
     recentBills,
   });

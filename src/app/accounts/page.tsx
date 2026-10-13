@@ -162,7 +162,7 @@ export default function AccountsPage() {
       <PageHeader title="Accounts" />
 
       <Card className="p-6 mb-6">
-        <div className="text-lg font-bold text-gray-900 mb-5">New Account</div>
+        <div className="text-lg font-bold text-gray-900 mb-5 border-b border-sky-100 pb-4">New Account</div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-5">
           <div>
@@ -230,17 +230,19 @@ export default function AccountsPage() {
           />
         </div>
 
-        {error && (
-          <div className="mb-4 rounded-lg bg-rose-50 text-red-700 text-sm px-4 py-3">{error}</div>
-        )}
+        <div className="border-t border-sky-100 pt-4">
+          {error && (
+            <div className="mb-4 rounded-lg bg-rose-50 text-red-700 text-sm px-4 py-3">{error}</div>
+          )}
 
-        <PrimaryButton onClick={handleSave} disabled={saving}>
-          {saving ? "Saving..." : "Save"}
-        </PrimaryButton>
+          <PrimaryButton onClick={handleSave} disabled={saving}>
+            {saving ? "Saving..." : "Save"}
+          </PrimaryButton>
+        </div>
       </Card>
 
       <Card className="p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-5 border-b border-sky-100 pb-4">
           <div className="text-lg font-bold text-gray-900">All Accounts</div>
           {rows.length > 0 && (
             <button

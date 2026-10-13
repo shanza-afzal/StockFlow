@@ -225,11 +225,10 @@ export default function AmountEntryPage() {
 
   return (
     <div>
-      <PageHeader title="Amount Entry" />
-      <p className="text-sm text-gray-500 -mt-4 mb-6">
-        Move money between two accounts — e.g. an owner deposit, or a transfer between accounts. Every
-        save is recorded as one Journal Voucher (JV).
-      </p>
+      <PageHeader
+        title="Amount Entry"
+        description="Move money between two accounts — e.g. an owner deposit, or a transfer between accounts. Every save is recorded as one Journal Voucher (JV)."
+      />
 
       <Card className="p-6 mb-6">
         <div className="max-w-xs mb-4">
@@ -328,7 +327,7 @@ export default function AmountEntryPage() {
 
         {error && <div className="mt-4 rounded-lg bg-rose-50 text-red-700 text-sm px-4 py-3">{error}</div>}
         {success && <div className="mt-4 rounded-lg bg-emerald-50 text-green-700 text-sm px-4 py-3">{success}</div>}
-        <div className="mt-4">
+        <div className="mt-5 border-t border-sky-100 pt-4">
           <PrimaryButton onClick={handleSubmit} disabled={saving}>
             {saving ? "Saving..." : "Save JV"}
           </PrimaryButton>

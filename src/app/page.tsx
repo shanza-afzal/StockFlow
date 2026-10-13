@@ -11,6 +11,7 @@ import {
   TableScroll,
   tableClass,
 } from "@/components/ui";
+import LowStockAlert, { LowStockItem } from "@/components/LowStockAlert";
 import { formatMoney } from "@/lib/calc";
 import { fetchJson } from "@/lib/fetchJson";
 
@@ -30,7 +31,7 @@ type DashboardData = {
   cashBalance: number;
   receivable: number;
   payable: number;
-  lowStockCount: number;
+  lowStockItems: LowStockItem[];
   stockValue: number;
   recentBills: RecentBill[];
 };
@@ -64,6 +65,8 @@ export default function DashboardPage() {
         <EmptyState>Loading...</EmptyState>
       ) : (
         <>
+          <LowStockAlert items={data.lowStockItems} />
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
             <StatCard label="Today's Sales" value={formatMoney(data.todaySales)} tone="green" accent="emerald" />
             <StatCard label="Today's Purchases" value={formatMoney(data.todayPurchases)} tone="red" accent="rose" />
@@ -73,7 +76,7 @@ export default function DashboardPage() {
             <StatCard
               label="Stock Value"
               value={formatMoney(data.stockValue)}
-              sub={data.lowStockCount > 0 ? `${data.lowStockCount} item(s) low on stock` : undefined}
+              sub={data.lowStockItems.length > 0 ? `${data.lowStockItems.length} item(s) low on stock` : undefined}
               accent="amber"
             />
           </div>

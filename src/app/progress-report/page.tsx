@@ -219,7 +219,7 @@ export default function ProgressReportPage() {
             </p>
           </section>
 
-          <section>
+          <section className="border-t border-sky-100 pt-8">
             <SectionTitle title="Sales Profit & Expenses" />
             <div className="flex flex-col gap-6">
               <ProfitVsExpenseRow heading="Today" prefix="Today's" s={data.today} />
@@ -236,7 +236,7 @@ export default function ProgressReportPage() {
             )}
           </section>
 
-          <section>
+          <section className="border-t border-sky-100 pt-8">
             <SectionTitle
               title="Custom Period"
               hint="Pick dates to look at any stretch of time. The figures above are not affected."
@@ -257,7 +257,7 @@ export default function ProgressReportPage() {
             {period && (
               <div className={`flex flex-col gap-6 transition-opacity ${loading ? "opacity-50" : ""}`}>
                 <Card className="p-6">
-                  <div className="font-semibold text-gray-900 mb-4">Business Activity</div>
+                  <div className="font-semibold text-gray-900 mb-4 border-b border-sky-100 pb-3">Business Activity</div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <StatCard
                       label="Sales"
@@ -294,7 +294,7 @@ export default function ProgressReportPage() {
                 </Card>
 
                 <Card className="p-6">
-                  <div className="font-semibold text-gray-900 mb-4">Cash Flow</div>
+                  <div className="font-semibold text-gray-900 mb-4 border-b border-sky-100 pb-3">Cash Flow</div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <StatCard label="Cash In" value={formatMoney(period.cashIn)} accent="emerald" />
                     <StatCard label="Cash Out" value={formatMoney(period.cashOut)} accent="rose" />
@@ -307,7 +307,9 @@ export default function ProgressReportPage() {
                 </Card>
 
                 <Card className="p-6">
-                  <div className="font-semibold text-gray-900 mb-4">Outstanding (as of today)</div>
+                  <div className="font-semibold text-gray-900 mb-4 border-b border-sky-100 pb-3">
+                    Outstanding (as of today)
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <StatCard label="Receivable" value={formatMoney(data.receivable)} accent="emerald" />
                     <StatCard label="Payable" value={formatMoney(data.payable)} accent="rose" />

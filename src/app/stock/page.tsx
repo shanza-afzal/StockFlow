@@ -16,8 +16,10 @@ import {
   tableClass,
 } from "@/components/ui";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
+import LowStockAlert, { StockBadge } from "@/components/LowStockAlert";
 import { formatMoney } from "@/lib/calc";
 import { fetchJson, parseJson } from "@/lib/fetchJson";
+import { stockLevel } from "@/lib/stockLevel";
 
 type StockRow = {
   id: number;
@@ -63,6 +65,8 @@ export default function StockPage() {
   }
 
   useEffect(load, []);
+
+  const lowStockItems = useMemo(() => rows.filter((r) => stockLevel(r.stock) !== "OK"), [rows]);
 
   const filteredRows = useMemo(
     () => rows.filter((r) => r.name.toLowerCase().includes(search.trim().toLowerCase())),
@@ -183,6 +187,8 @@ export default function StockPage() {
         />
       </div>
 
+      {tab === "CURRENT" && !loading && <LowStockAlert items={lowStockItems} />}
+
       {tab === "CURRENT" && (
         <Card className="p-6">
           <input
@@ -237,12 +243,15 @@ export default function StockPage() {
                   ) : (
                     <tr key={r.id} className="border-t border-sky-100 hover:bg-sky-50">
                       <td className="px-4 py-3">
-                        <div className="font-medium text-gray-900">{r.name}</div>
+                        <div className="font-medium text-gray-900">
+                          {r.name}
+                          <StockBadge stock={r.stock} />
+                        </div>
                         <div className="text-xs text-gray-400">Unit: {r.unit}</div>
                       </td>
                       <td
                         className={`px-4 py-3 text-right font-semibold ${
-                          r.stock <= 0 ? "text-red-600" : r.stock <= 5 ? "text-amber-600" : "text-gray-900"
+                          { OUT: "text-red-600", LOW: "text-amber-600", OK: "text-gray-900" }[stockLevel(r.stock)]
                         }`}
                       >
                         {r.stock}
@@ -266,7 +275,7 @@ export default function StockPage() {
 
       {tab === "NEW" && (
         <Card className="p-6 max-w-3xl">
-          <div className="font-semibold text-gray-900 mb-4">Add Item</div>
+          <div className="font-semibold text-gray-900 mb-4 border-b border-sky-100 pb-3">Add Item</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <FieldLabel>Name</FieldLabel>
@@ -323,8 +332,8 @@ export default function StockPage() {
               />
             </div>
           </div>
-          {error && <div className="mt-4 rounded-lg bg-rose-50 text-red-700 text-sm px-4 py-3">{error}</div>}
-          <div className="mt-4">
+          <div className="mt-5 border-t border-sky-100 pt-4">
+            {error && <div className="mb-4 rounded-lg bg-rose-50 text-red-700 text-sm px-4 py-3">{error}</div>}
             <PrimaryButton onClick={handleAdd} disabled={saving}>
               {saving ? "Adding..." : "Add Item"}
             </PrimaryButton>
@@ -334,7 +343,7 @@ export default function StockPage() {
 
       {tab === "UPDATE" && (
         <Card className="p-6 max-w-3xl">
-          <div className="font-semibold text-gray-900 mb-4">Update Item</div>
+          <div className="font-semibold text-gray-900 mb-4 border-b border-sky-100 pb-3">Update Item</div>
           <div className="max-w-sm mb-4">
             <FieldLabel>Item</FieldLabel>
             <select className={selectClass} value={updateId} onChange={(e) => selectForUpdate(e.target.value)}>
@@ -389,10 +398,10 @@ export default function StockPage() {
                   />
                 </div>
               </div>
-              {updateError && (
-                <div className="mt-4 rounded-lg bg-rose-50 text-red-700 text-sm px-4 py-3">{updateError}</div>
-              )}
-              <div className="mt-4">
+              <div className="mt-5 border-t border-sky-100 pt-4">
+                {updateError && (
+                  <div className="mb-4 rounded-lg bg-rose-50 text-red-700 text-sm px-4 py-3">{updateError}</div>
+                )}
                 <PrimaryButton onClick={handleUpdateSave} disabled={updateSaving}>
                   {updateSaving ? "Saving..." : "Save Changes"}
                 </PrimaryButton>

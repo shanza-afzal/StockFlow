@@ -14,6 +14,7 @@ import {
 } from "@/components/ui";
 import { formatMoney } from "@/lib/calc";
 import { parseJson } from "@/lib/fetchJson";
+import { stockLevel } from "@/lib/stockLevel";
 
 type StockRow = {
   id: number;
@@ -170,6 +171,41 @@ export default function BillForm({ type }: { type: "SALE" | "PURCHASE" }) {
         }, 0)
       : 0;
   const profit = billTotal - costAmount;
+
+  // Stock left per item once every line on this sale is taken off, so the same item picked on
+  // two rows is counted together.
+  const stockWarnings = useMemo(() => {
+    if (type !== "SALE") return [];
+    const sold = new Map<number, number>();
+    for (const r of rows) {
+      const id = Number(r.itemId);
+      if (id) sold.set(id, (sold.get(id) ?? 0) + (Number(r.qty) || 0));
+    }
+    const warnings: { id: number; text: string; severe: boolean }[] = [];
+    for (const [id, qty] of sold) {
+      const item = itemMap.get(id);
+      if (!item) continue;
+      const remaining = item.stock - qty;
+      if (item.stock <= 0) {
+        warnings.push({ id, text: `${item.name} is out of stock`, severe: true });
+      } else if (remaining < 0) {
+        warnings.push({
+          id,
+          text: `${item.name}: only ${item.stock} ${item.unit} in stock, ${qty} requested`,
+          severe: true,
+        });
+      } else if (stockLevel(remaining) === "OUT") {
+        warnings.push({ id, text: `${item.name}: this sale uses up all remaining stock`, severe: true });
+      } else if (stockLevel(remaining) === "LOW") {
+        warnings.push({
+          id,
+          text: `${item.name}: only ${remaining} ${item.unit} left after this sale`,
+          severe: false,
+        });
+      }
+    }
+    return warnings;
+  }, [type, rows, itemMap]);
 
   async function handleSubmit() {
     setError(null);
@@ -396,7 +432,7 @@ export default function BillForm({ type }: { type: "SALE" | "PURCHASE" }) {
           </tbody>
           </table>
         </TableScroll>
-        <div className="p-4">
+        <div className="border-t border-sky-100 p-4">
           <button
             type="button"
             onClick={addRow}
@@ -406,6 +442,24 @@ export default function BillForm({ type }: { type: "SALE" | "PURCHASE" }) {
           </button>
         </div>
       </Card>
+
+      {stockWarnings.length > 0 && (
+        <div
+          role="status"
+          className={`rounded-xl border px-4 py-3 text-sm ${
+            stockWarnings.some((w) => w.severe)
+              ? "border-rose-200 bg-rose-50 text-rose-800"
+              : "border-amber-200 bg-amber-50 text-amber-800"
+          }`}
+        >
+          <div className="font-semibold mb-1">Stock warning</div>
+          <ul className="list-disc pl-5">
+            {stockWarnings.map((w) => (
+              <li key={w.id}>{w.text}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <Card className="p-6">
         {mode === "CREDIT" && (
@@ -428,7 +482,7 @@ export default function BillForm({ type }: { type: "SALE" | "PURCHASE" }) {
             <span className="font-medium">{totalLabel}</span>
             <span className="font-bold text-gray-900">{formatMoney(billTotal)}</span>
           </div>
-          <div className="flex justify-between items-center py-1">
+          <div className="flex justify-between items-center py-1 border-t border-sky-100 mt-1 pt-2">
             <span className="font-bold text-gray-900 text-lg">Amount Due</span>
             <span className="font-bold text-blue-600 text-xl">{formatMoney(amountDue)}</span>
           </div>
