@@ -14,10 +14,11 @@ import {
   selectClass,
   tableClass,
 } from "@/components/ui";
+import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import { formatMoney } from "@/lib/calc";
 import { fetchJson, parseJson } from "@/lib/fetchJson";
 
-type Account = { id: number; name: string; balance: number };
+type Account ={ id: number; name: string; balance: number };
 type Entry = {
   id: number;
   jvNo: number;
@@ -34,6 +35,10 @@ type Voucher = {
   total: number;
   legs: Entry[];
 };
+
+type DeleteAllPreview = { vouchers: number; entries: number; total: number };
+
+const CONFIRM_WORD = "DELETE";
 
 type Row = {
   key: string;
@@ -58,6 +63,11 @@ export default function AmountEntryPage() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<number | null>(null);
+  const [deletingVoucher, setDeletingVoucher] = useState<Voucher | null>(null);
+  const [deleteAll, setDeleteAll] = useState<DeleteAllPreview | null>(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [notice, setNotice] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
 
   const [date, setDate] = useState(todayStr());
   const [rows, setRows] = useState<Row[]>([emptyRow(), emptyRow(), emptyRow(), emptyRow()]);
@@ -112,6 +122,7 @@ export default function AmountEntryPage() {
   async function handleSubmit() {
     setError(null);
     setSuccess(null);
+    setNotice(null);
     const validRows = rows.filter((r) => Number(r.amount) > 0);
     if (validRows.length === 0) {
       setError("Add at least one row with an amount greater than zero.");
@@ -159,15 +170,57 @@ export default function AmountEntryPage() {
     }
   }
 
-  async function handleDeleteVoucher(jvNo: number) {
-    if (!confirm(`Delete JV #${jvNo}? This cannot be undone.`)) return;
-    const res = await fetch(`/api/amount-entries?jvNo=${jvNo}`, { method: "DELETE" });
-    if (res.ok) {
-      loadEntries();
-      fetchJson<Account[]>("/api/accounts").then((d) => {
-        if (d) setAccounts(d);
-      });
+  async function confirmDeleteVoucher(voucher: Voucher): Promise<string | null> {
+    const res = await fetch(`/api/amount-entries?jvNo=${voucher.jvNo}`, { method: "DELETE" });
+    if (!res.ok) {
+      const data = await parseJson<{ error?: string }>(res);
+      return data?.error || "Could not delete the voucher.";
     }
+    loadEntries();
+    fetchJson<Account[]>("/api/accounts").then((d) => {
+      if (d) setAccounts(d);
+    });
+    return null;
+  }
+
+  // Ask the server first so the dialog shows exactly how many vouchers will go.
+  async function openDeleteAll() {
+    setNotice(null);
+    setLoadingPreview(true);
+    try {
+      const preview = await fetchJson<DeleteAllPreview>("/api/amount-entries/delete-all");
+      if (preview) {
+        setConfirmText("");
+        setDeleteAll(preview);
+      } else {
+        setNotice({ tone: "error", text: "Could not check your journal vouchers. Please try again." });
+      }
+    } catch {
+      setNotice({ tone: "error", text: "Could not check your journal vouchers. Please try again." });
+    } finally {
+      setLoadingPreview(false);
+    }
+  }
+
+  async function confirmDeleteAll(): Promise<string | null> {
+    const res = await fetch("/api/amount-entries/delete-all", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ confirm: CONFIRM_WORD }),
+    });
+    const data = await parseJson<{ error?: string; deleted?: number }>(res);
+    if (!res.ok) return data?.error || "Could not delete the journal vouchers.";
+    const deleted = data?.deleted ?? 0;
+    setNotice({
+      tone: "ok",
+      text: `Deleted all journal vouchers (${deleted} ${deleted === 1 ? "entry" : "entries"}).`,
+    });
+    setExpanded(null);
+    loadEntries();
+    fetchJson<Account[]>("/api/accounts").then((d) => {
+      if (d) setAccounts(d);
+    });
+    return null;
   }
 
   return (
@@ -186,7 +239,7 @@ export default function AmountEntryPage() {
 
         <TableScroll>
           <table className={tableClass}>
-            <thead className="bg-gray-50 text-gray-500">
+            <thead className="bg-sky-50 text-sky-700">
               <tr>
                 <th className="text-left font-semibold px-3 py-2">Paying Account</th>
                 <th className="text-left font-semibold px-3 py-2">Receiving Account</th>
@@ -197,7 +250,7 @@ export default function AmountEntryPage() {
             </thead>
             <tbody>
               {rows.map((row) => (
-                <tr key={row.key} className="border-t border-gray-100">
+                <tr key={row.key} className="border-t border-sky-100">
                   <td className="px-3 py-2">
                     <select
                       className={selectClass}
@@ -267,14 +320,14 @@ export default function AmountEntryPage() {
           <button
             type="button"
             onClick={addRow}
-            className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-sky-50"
           >
             + Add Row
           </button>
         </div>
 
-        {error && <div className="mt-4 rounded-lg bg-red-50 text-red-700 text-sm px-4 py-3">{error}</div>}
-        {success && <div className="mt-4 rounded-lg bg-green-50 text-green-700 text-sm px-4 py-3">{success}</div>}
+        {error && <div className="mt-4 rounded-lg bg-rose-50 text-red-700 text-sm px-4 py-3">{error}</div>}
+        {success && <div className="mt-4 rounded-lg bg-emerald-50 text-green-700 text-sm px-4 py-3">{success}</div>}
         <div className="mt-4">
           <PrimaryButton onClick={handleSubmit} disabled={saving}>
             {saving ? "Saving..." : "Save JV"}
@@ -290,7 +343,7 @@ export default function AmountEntryPage() {
         ) : (
           <TableScroll>
             <table className={tableClass}>
-              <thead className="bg-gray-50 text-gray-500">
+              <thead className="bg-sky-50 text-sky-700">
                 <tr>
                   <th className="text-left font-semibold px-4 py-3">JV #</th>
                   <th className="text-left font-semibold px-4 py-3">Date</th>
@@ -303,7 +356,7 @@ export default function AmountEntryPage() {
                 {vouchers.map((v) => (
                   <Fragment key={v.jvNo}>
                     <tr
-                      className="border-t border-gray-100 hover:bg-gray-50 cursor-pointer"
+                      className="border-t border-sky-100 hover:bg-sky-50 cursor-pointer"
                       onClick={() => setExpanded(expanded === v.jvNo ? null : v.jvNo)}
                     >
                       <td className="px-4 py-3 font-medium text-gray-900">JV #{v.jvNo}</td>
@@ -324,7 +377,7 @@ export default function AmountEntryPage() {
                         <DangerButton
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDeleteVoucher(v.jvNo);
+                            setDeletingVoucher(v);
                           }}
                         >
                           Delete
@@ -332,7 +385,7 @@ export default function AmountEntryPage() {
                       </td>
                     </tr>
                     {expanded === v.jvNo && (
-                      <tr className="bg-gray-50/60">
+                      <tr className="bg-sky-50/60">
                         <td colSpan={5} className="px-6 py-3">
                           <table className="w-full text-xs">
                             <thead className="text-gray-500">
@@ -345,7 +398,7 @@ export default function AmountEntryPage() {
                             </thead>
                             <tbody>
                               {v.legs.map((leg) => (
-                                <tr key={leg.id} className="border-t border-gray-200">
+                                <tr key={leg.id} className="border-t border-sky-100">
                                   <td className="py-1">{leg.fromAccount?.name || "Cash"}</td>
                                   <td className="py-1">{leg.toAccount?.name || "Cash"}</td>
                                   <td className="py-1">{leg.description || "—"}</td>
@@ -364,6 +417,112 @@ export default function AmountEntryPage() {
           </TableScroll>
         )}
       </Card>
+
+      <Card className="mt-6 p-6 border-red-200!">
+        <h2 className="text-lg font-bold text-red-700">Delete All</h2>
+        <p className="mt-1 text-sm text-gray-600">
+          Removes every journal voucher and all of its entries in one go, and restarts JV numbering
+          from 1. Bills, accounts and stock items are not touched.
+        </p>
+        {notice && (
+          <div
+            role={notice.tone === "error" ? "alert" : "status"}
+            className={`mt-4 rounded-lg text-sm px-4 py-3 ${
+              notice.tone === "ok" ? "bg-emerald-50 text-green-700" : "bg-rose-50 text-red-700"
+            }`}
+          >
+            {notice.text}
+          </div>
+        )}
+        <div className="mt-4">
+          <button
+            type="button"
+            onClick={openDeleteAll}
+            disabled={loading || vouchers.length === 0 || loadingPreview}
+            className="inline-flex items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {loadingPreview ? "Checking..." : "Delete All Journal Vouchers"}
+          </button>
+        </div>
+      </Card>
+
+      {deleteAll && (
+        <ConfirmDeleteModal
+          title="Delete All Journal Vouchers"
+          message={
+            deleteAll.vouchers === 0
+              ? "There are no journal vouchers to delete."
+              : "You are about to permanently delete every journal voucher."
+          }
+          details={[
+            { label: "Journal vouchers", value: deleteAll.vouchers },
+            { label: "Entries", value: deleteAll.entries },
+            { label: "Combined total", value: formatMoney(deleteAll.total) },
+          ]}
+          effects={[
+            "All vouchers and their entries are removed for good.",
+            "The balances of the accounts involved, and the cash book where cash is one side, are recalculated without them.",
+            "Journal numbering restarts from JV #1.",
+            "Bills, accounts and stock items are not touched.",
+          ]}
+          confirmLabel="Delete All"
+          confirmDisabled={deleteAll.vouchers === 0 || confirmText !== CONFIRM_WORD}
+          onConfirm={confirmDeleteAll}
+          onClose={() => setDeleteAll(null)}
+        >
+          <div className="mt-4">
+            <FieldLabel>
+              Type <span className="font-mono text-red-600">{CONFIRM_WORD}</span> to confirm
+            </FieldLabel>
+            <input
+              className={inputClass}
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              autoComplete="off"
+              autoFocus
+            />
+          </div>
+        </ConfirmDeleteModal>
+      )}
+
+      {deletingVoucher && (
+        <ConfirmDeleteModal
+          title="Delete Journal Voucher"
+          subtitle={`JV #${deletingVoucher.jvNo}`}
+          message={`You are about to permanently delete JV #${deletingVoucher.jvNo} and all of its entries.`}
+          details={[
+            { label: "Voucher", value: `JV #${deletingVoucher.jvNo}` },
+            { label: "Date", value: new Date(deletingVoucher.date).toLocaleDateString() },
+            { label: "Entries", value: deletingVoucher.legs.length },
+            { label: "Total", value: formatMoney(deletingVoucher.total) },
+          ]}
+          effects={[
+            "All entries in this voucher are removed together.",
+            "The balances of the accounts involved, and the cash book where cash is one side, are recalculated without it.",
+          ]}
+          onConfirm={() => confirmDeleteVoucher(deletingVoucher)}
+          onClose={() => setDeletingVoucher(null)}
+        >
+          <table className="mt-4 w-full text-xs">
+            <thead className="text-gray-500">
+              <tr className="border-b border-sky-100">
+                <th className="py-1.5 text-left font-semibold">Paying</th>
+                <th className="py-1.5 text-left font-semibold">Receiving</th>
+                <th className="py-1.5 text-right font-semibold">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {deletingVoucher.legs.map((leg) => (
+                <tr key={leg.id} className="border-b border-sky-100 text-gray-700">
+                  <td className="py-1.5 pr-2">{leg.fromAccount?.name || "Cash"}</td>
+                  <td className="py-1.5 pr-2">{leg.toAccount?.name || "Cash"}</td>
+                  <td className="py-1.5 text-right">{formatMoney(leg.amount)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </ConfirmDeleteModal>
+      )}
     </div>
   );
 }

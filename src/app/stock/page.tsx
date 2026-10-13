@@ -15,6 +15,7 @@ import {
   selectClass,
   tableClass,
 } from "@/components/ui";
+import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import { formatMoney } from "@/lib/calc";
 import { fetchJson, parseJson } from "@/lib/fetchJson";
 
@@ -46,6 +47,7 @@ export default function StockPage() {
 
   const [adjustingId, setAdjustingId] = useState<number | null>(null);
   const [adjustValue, setAdjustValue] = useState("");
+  const [deleting, setDeleting] = useState<StockRow | null>(null);
 
   const [updateId, setUpdateId] = useState("");
   const [updateForm, setUpdateForm] = useState(emptyForm());
@@ -110,14 +112,14 @@ export default function StockPage() {
     }
   }
 
-  async function handleDelete(id: number) {
-    if (!confirm("Delete this item?")) return;
-    const res = await fetch(`/api/items/${id}`, { method: "DELETE" });
-    if (res.ok) load();
-    else {
-      const data = await parseJson<{ error?: string }>(res);
-      alert(data?.error || "Could not delete item.");
+  async function confirmDelete(row: StockRow): Promise<string | null> {
+    const res = await fetch(`/api/items/${row.id}`, { method: "DELETE" });
+    if (res.ok) {
+      load();
+      return null;
     }
+    const data = await parseJson<{ error?: string }>(res);
+    return data?.error || "Could not delete item.";
   }
 
   function selectForUpdate(idStr: string) {
@@ -197,7 +199,7 @@ export default function StockPage() {
           ) : (
             <TableScroll>
               <table className={tableClass}>
-              <thead className="bg-gray-50 text-gray-500">
+              <thead className="bg-sky-50 text-sky-700">
                 <tr>
                   <th className="text-left font-semibold px-4 py-3">Name</th>
                   <th className="text-right font-semibold px-4 py-3">Current Qty</th>
@@ -208,7 +210,7 @@ export default function StockPage() {
               <tbody>
                 {filteredRows.map((r) =>
                   adjustingId === r.id ? (
-                    <tr key={r.id} className="border-t border-gray-100 bg-blue-50/40">
+                    <tr key={r.id} className="border-t border-sky-100 bg-sky-50/40">
                       <td className="px-4 py-3">
                         <div className="font-medium text-gray-900">{r.name}</div>
                         <div className="text-xs text-gray-400">Unit: {r.unit}</div>
@@ -233,7 +235,7 @@ export default function StockPage() {
                       </td>
                     </tr>
                   ) : (
-                    <tr key={r.id} className="border-t border-gray-100 hover:bg-gray-50">
+                    <tr key={r.id} className="border-t border-sky-100 hover:bg-sky-50">
                       <td className="px-4 py-3">
                         <div className="font-medium text-gray-900">{r.name}</div>
                         <div className="text-xs text-gray-400">Unit: {r.unit}</div>
@@ -250,7 +252,7 @@ export default function StockPage() {
                         <SecondaryButton className="px-2 py-1" onClick={() => startAdjust(r)}>
                           Adjust Stock
                         </SecondaryButton>
-                        <DangerButton onClick={() => handleDelete(r.id)}>Delete</DangerButton>
+                        <DangerButton onClick={() => setDeleting(r)}>Delete</DangerButton>
                       </td>
                     </tr>
                   )
@@ -321,7 +323,7 @@ export default function StockPage() {
               />
             </div>
           </div>
-          {error && <div className="mt-4 rounded-lg bg-red-50 text-red-700 text-sm px-4 py-3">{error}</div>}
+          {error && <div className="mt-4 rounded-lg bg-rose-50 text-red-700 text-sm px-4 py-3">{error}</div>}
           <div className="mt-4">
             <PrimaryButton onClick={handleAdd} disabled={saving}>
               {saving ? "Adding..." : "Add Item"}
@@ -388,7 +390,7 @@ export default function StockPage() {
                 </div>
               </div>
               {updateError && (
-                <div className="mt-4 rounded-lg bg-red-50 text-red-700 text-sm px-4 py-3">{updateError}</div>
+                <div className="mt-4 rounded-lg bg-rose-50 text-red-700 text-sm px-4 py-3">{updateError}</div>
               )}
               <div className="mt-4">
                 <PrimaryButton onClick={handleUpdateSave} disabled={updateSaving}>
@@ -398,6 +400,28 @@ export default function StockPage() {
             </>
           )}
         </Card>
+      )}
+
+      {deleting && (
+        <ConfirmDeleteModal
+          title="Delete Item"
+          subtitle={deleting.name}
+          message="You are about to permanently delete this item from your stock."
+          details={[
+            { label: "Name", value: deleting.name },
+            { label: "Unit", value: deleting.unit },
+            { label: "Current Qty", value: deleting.stock },
+            { label: "Purchase Price", value: formatMoney(deleting.purchasePrice) },
+            { label: "Sale Price", value: formatMoney(deleting.salePrice) },
+            { label: "Stock Value", value: formatMoney(deleting.value) },
+          ]}
+          effects={[
+            `The item and its remaining stock (${deleting.stock} ${deleting.unit}) are removed from your inventory.`,
+            "An item that already appears on a bill can't be deleted. If that's the case, you'll be told here.",
+          ]}
+          onConfirm={() => confirmDelete(deleting)}
+          onClose={() => setDeleting(null)}
+        />
       )}
     </div>
   );

@@ -54,7 +54,7 @@ export default function DashboardPage() {
               <PrimaryButton>New Sale Bill</PrimaryButton>
             </Link>
             <Link href="/purchase-bill">
-              <PrimaryButton className="bg-gray-800 hover:bg-gray-900">New Purchase Bill</PrimaryButton>
+              <PrimaryButton className="bg-violet-600 hover:bg-violet-700">New Purchase Bill</PrimaryButton>
             </Link>
           </div>
         }
@@ -65,20 +65,21 @@ export default function DashboardPage() {
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            <StatCard label="Today's Sales" value={formatMoney(data.todaySales)} tone="green" />
-            <StatCard label="Today's Purchases" value={formatMoney(data.todayPurchases)} tone="red" />
-            <StatCard label="Cash Balance" value={formatMoney(data.cashBalance)} tone="blue" />
-            <StatCard label="Receivable" value={formatMoney(data.receivable)} tone="green" />
-            <StatCard label="Payable" value={formatMoney(data.payable)} tone="red" />
+            <StatCard label="Today's Sales" value={formatMoney(data.todaySales)} tone="green" accent="emerald" />
+            <StatCard label="Today's Purchases" value={formatMoney(data.todayPurchases)} tone="red" accent="rose" />
+            <StatCard label="Cash Balance" value={formatMoney(data.cashBalance)} tone="blue" accent="sky" />
+            <StatCard label="Receivable" value={formatMoney(data.receivable)} tone="green" accent="emerald" />
+            <StatCard label="Payable" value={formatMoney(data.payable)} tone="red" accent="rose" />
             <StatCard
               label="Stock Value"
               value={formatMoney(data.stockValue)}
               sub={data.lowStockCount > 0 ? `${data.lowStockCount} item(s) low on stock` : undefined}
+              accent="amber"
             />
           </div>
 
           <Card className="overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-100 font-semibold text-gray-900">
+            <div className="px-4 py-3 border-b border-sky-100 bg-linear-to-r from-sky-50 to-white font-semibold text-gray-900">
               Recent Bills
             </div>
             {data.recentBills.length === 0 ? (
@@ -86,7 +87,7 @@ export default function DashboardPage() {
             ) : (
               <TableScroll>
               <table className={tableClass}>
-                <thead className="bg-gray-50 text-gray-500">
+                <thead className="bg-sky-50 text-sky-700">
                   <tr>
                     <th className="text-left font-semibold px-4 py-3">Type</th>
                     <th className="text-left font-semibold px-4 py-3">Bill #</th>
@@ -98,11 +99,11 @@ export default function DashboardPage() {
                 </thead>
                 <tbody>
                   {data.recentBills.map((b) => (
-                    <tr key={`${b.type}-${b.id}`} className="border-t border-gray-100">
+                    <tr key={`${b.type}-${b.id}`} className="border-t border-sky-100 hover:bg-sky-50/50 transition-colors">
                       <td className="px-4 py-3">
                         <span
                           className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                            b.type === "SALE" ? "bg-blue-50 text-blue-700" : "bg-purple-50 text-purple-700"
+                            b.type === "SALE" ? "bg-emerald-100 text-emerald-700" : "bg-violet-100 text-violet-700"
                           }`}
                         >
                           {b.type === "SALE" ? "Sale" : "Purchase"}

@@ -8,6 +8,11 @@ const sizeClass = {
   lg: "max-w-xl",
 };
 
+// Dialogs can stack (a delete confirmation opened from a bill popup). Only the topmost one
+// answers Escape, and the page stays scroll-locked until the last one closes.
+const openDialogs: symbol[] = [];
+let overflowBeforeLock = "";
+
 export default function Modal({
   title,
   subtitle,
@@ -29,18 +34,28 @@ export default function Modal({
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
 
+  // Callers pass inline handlers; reading the latest through a ref keeps this dialog's place in
+  // the stack from being reshuffled on every re-render.
+  const onCloseRef = useRef(onClose);
   useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    const id = Symbol();
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && openDialogs[openDialogs.length - 1] === id) onCloseRef.current();
     }
     document.addEventListener("keydown", onKeyDown);
-    const prevOverflow = document.body.style.overflow;
+    if (openDialogs.length === 0) overflowBeforeLock = document.body.style.overflow;
+    openDialogs.push(id);
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = prevOverflow;
+      openDialogs.splice(openDialogs.indexOf(id), 1);
+      if (openDialogs.length === 0) document.body.style.overflow = overflowBeforeLock;
     };
-  }, [onClose]);
+  }, []);
 
   useEffect(() => {
     panelRef.current?.focus();
@@ -64,7 +79,7 @@ export default function Modal({
         tabIndex={-1}
         className={`flex max-h-[85vh] w-full ${sizeClass[size]} flex-col rounded-xl bg-white shadow-xl focus:outline-none print:max-h-none print:max-w-none print:shadow-none`}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-gray-100 px-5 py-3">
+        <div className="flex items-start justify-between gap-4 rounded-t-xl border-b border-sky-100 bg-linear-to-r from-sky-50 to-white px-5 py-3">
           <div className="min-w-0">
             <h2 className="text-base font-bold text-gray-900">{title}</h2>
             {subtitle && <p className="mt-0.5 text-xs text-gray-500">{subtitle}</p>}
@@ -79,7 +94,7 @@ export default function Modal({
           </button>
         </div>
         <div className="overflow-y-auto px-5 py-4">{children}</div>
-        {footer && <div className="border-t border-gray-100 px-5 py-3 print:hidden">{footer}</div>}
+        {footer && <div className="border-t border-sky-100 px-5 py-3 print:hidden">{footer}</div>}
       </div>
     </div>,
     document.body

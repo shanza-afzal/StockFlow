@@ -15,7 +15,7 @@ export async function PUT(req: NextRequest) {
   const updated = await prisma.settings.update({
     where: { id: settings.id },
     data: {
-      ...(companyName !== undefined ? { companyName: String(companyName).trim() || "Safi ERP" } : {}),
+      ...(companyName !== undefined ? { companyName: String(companyName).trim() || "" } : {}),
       ...(currency !== undefined ? { currency: String(currency).trim() || "Rs." } : {}),
       ...(address !== undefined ? { address: address?.trim() || null } : {}),
       ...(phone !== undefined ? { phone: phone?.trim() || null } : {}),

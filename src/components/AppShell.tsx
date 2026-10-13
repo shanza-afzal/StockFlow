@@ -8,7 +8,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-white">
+    <div className="flex min-h-screen bg-linear-to-br from-sky-50 via-slate-50 to-violet-50">
       <div className="hidden lg:block">
         <Sidebar />
       </div>

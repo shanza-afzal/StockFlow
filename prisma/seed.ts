@@ -6,7 +6,7 @@ async function main() {
   await prisma.settings.upsert({
     where: { id: 1 },
     update: {},
-    create: { id: 1, companyName: "Safi ERP", currency: "Rs." },
+    create: { id: 1, companyName: "", currency: "Rs." },
   });
 
   const items = [

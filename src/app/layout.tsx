@@ -14,7 +14,6 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Safi ERP",
   description: "Inventory & billing management system",
 };
 

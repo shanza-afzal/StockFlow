@@ -94,7 +94,7 @@ export default function LedgerPage() {
         ) : (
           <TableScroll>
             <table className={tableClass}>
-            <thead className="bg-gray-50 text-gray-500">
+            <thead className="bg-sky-50 text-sky-700">
               <tr>
                 <th className="text-left font-semibold px-4 py-3">Name</th>
                 <th className="text-left font-semibold px-4 py-3">Type</th>
@@ -106,7 +106,7 @@ export default function LedgerPage() {
             </thead>
             <tbody>
               {visible.map((r) => (
-                <tr key={r.id} className="border-t border-gray-100 hover:bg-gray-50">
+                <tr key={r.id} className="border-t border-sky-100 hover:bg-sky-50">
                   <td className="px-4 py-4 font-medium text-gray-900">{r.name}</td>
                   <td className="px-4 py-4 text-gray-600">{titleCase(r.type)}</td>
                   <td className="px-4 py-4 text-right text-gray-900">{formatMoney(r.credit)}</td>

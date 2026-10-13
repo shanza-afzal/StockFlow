@@ -44,16 +44,19 @@ export default function PurchaseReportsPage() {
               label="Total Purchases"
               value={formatMoney(data.totalPurchases)}
               sub={`${data.billCount} bill(s)`}
+              accent="violet"
             />
             <StatCard
               label="Credit Purchases"
               value={formatMoney(data.creditPurchases)}
               sub={`${data.creditBills.length} bill(s)`}
+              accent="rose"
             />
             <StatCard
               label="Cash Purchases"
               value={formatMoney(data.cashPurchases)}
               sub={`${data.cashBills.length} bill(s)`}
+              accent="emerald"
             />
           </div>
 
@@ -79,7 +82,7 @@ export default function PurchaseReportsPage() {
           />
 
           <Card className="overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-100 font-semibold text-gray-900">
+            <div className="px-4 py-3 border-b border-sky-100 font-semibold text-gray-900">
               Product Wise Purchase
             </div>
             {data.byItem.length === 0 ? (
@@ -87,7 +90,7 @@ export default function PurchaseReportsPage() {
             ) : (
               <TableScroll>
                 <table className={tableClass}>
-                  <thead className="bg-gray-50 text-gray-500">
+                  <thead className="bg-sky-50 text-sky-700">
                     <tr>
                       <th className="text-left font-semibold px-4 py-3">Product</th>
                       <th className="text-right font-semibold px-4 py-3">Qty Purchased</th>
@@ -96,7 +99,7 @@ export default function PurchaseReportsPage() {
                   </thead>
                   <tbody>
                     {data.byItem.map((r) => (
-                      <tr key={r.name} className="border-t border-gray-100">
+                      <tr key={r.name} className="border-t border-sky-100">
                         <td className="px-4 py-3 font-medium text-gray-900">{r.name}</td>
                         <td className="px-4 py-3 text-right text-gray-600">
                           {formatQty(r.qty)} {r.unit}
@@ -105,7 +108,7 @@ export default function PurchaseReportsPage() {
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot className="bg-gray-50 border-t border-gray-200 font-semibold text-gray-900">
+                  <tfoot className="bg-sky-50 border-t border-sky-100 font-semibold text-gray-900">
                     <tr>
                       <td className="px-4 py-3" colSpan={2}>
                         Total · {data.byItem.length} product(s)

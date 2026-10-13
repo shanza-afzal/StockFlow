@@ -109,8 +109,8 @@ export default function CashPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-        <StatCard label="Cash In" value={formatMoney(data?.totalIn ?? 0)} center />
-        <StatCard label="Cash Out" value={formatMoney(data?.totalOut ?? 0)} center />
+        <StatCard label="Cash In" value={formatMoney(data?.totalIn ?? 0)} center accent="emerald" />
+        <StatCard label="Cash Out" value={formatMoney(data?.totalOut ?? 0)} center accent="rose" />
       </div>
 
       <Card className="p-6 mb-6">
@@ -176,7 +176,7 @@ export default function CashPage() {
         </div>
 
         {error && (
-          <div className="mt-4 rounded-lg bg-red-50 text-red-700 text-sm px-4 py-3">{error}</div>
+          <div className="mt-4 rounded-lg bg-rose-50 text-red-700 text-sm px-4 py-3">{error}</div>
         )}
 
         <div className="mt-5">
@@ -194,7 +194,7 @@ export default function CashPage() {
         ) : (
           <TableScroll>
             <table className={tableClass}>
-            <thead className="bg-gray-50 text-gray-500">
+            <thead className="bg-sky-50 text-sky-700">
               <tr>
                 <th className="text-left font-semibold px-4 py-3">Date</th>
                 <th className="text-left font-semibold px-4 py-3">Details</th>
@@ -205,7 +205,7 @@ export default function CashPage() {
             </thead>
             <tbody>
               {rows.map((r, i) => (
-                <tr key={i} className="border-t border-gray-100">
+                <tr key={i} className="border-t border-sky-100">
                   <td className="px-4 py-3 text-gray-600">{new Date(r.date).toLocaleDateString()}</td>
                   <td className="px-4 py-3 text-gray-900">{r.description}</td>
                   <td className="px-4 py-3 text-right text-green-700">

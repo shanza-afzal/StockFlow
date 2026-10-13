@@ -24,11 +24,8 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 shrink-0 border-r border-gray-200 bg-white h-screen sticky top-0 overflow-y-auto">
-      <div className="px-6 py-6">
-        <span className="text-xl font-bold text-gray-900">Safi ERP</span>
-      </div>
-      <nav className="px-3 pb-8 flex flex-col gap-1">
+    <aside className="w-64 shrink-0 border-r border-sky-100 bg-linear-to-b from-sky-100/70 via-white to-violet-100/60 h-screen sticky top-0 overflow-y-auto">
+      <nav className="px-3 py-6 flex flex-col gap-1">
         {NAV_ITEMS.map((item) => {
           const active =
             item.href === "/"
@@ -40,7 +37,9 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
               href={item.href}
               onClick={onNavigate}
               className={`rounded-lg px-3 py-2.5 text-[15px] font-semibold transition-colors ${
-                active ? "bg-blue-50 text-blue-600" : "text-gray-900 hover:bg-gray-50"
+                active
+                  ? "bg-white text-sky-700 shadow-sm ring-1 ring-sky-200"
+                  : "text-gray-800 hover:bg-white/70 hover:text-sky-700"
               }`}
             >
               {item.label}

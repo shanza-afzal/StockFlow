@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import Modal from "@/components/Modal";
 import {
   Card,
@@ -126,6 +127,13 @@ export default function BillsRegister({ type }: { type: "SALE" | "PURCHASE" }) {
   const [editRows, setEditRows] = useState<EditRow[]>([]);
   const [editError, setEditError] = useState<string | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [deletingBill, setDeletingBill] = useState<Bill | null>(null);
+  // Delete All removes every bill of this type, not just the ones on screen, so its popup counts
+  // them first: undefined while counting, null if the count failed.
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
+  const [deleteAllSummary, setDeleteAllSummary] = useState<
+    { count: number; total: number } | null | undefined
+  >(undefined);
 
   useEffect(() => {
     fetchJson<StockRow[]>("/api/items").then((data) => {
@@ -157,20 +165,39 @@ export default function BillsRegister({ type }: { type: "SALE" | "PURCHASE" }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, date, from, to]);
 
-  async function handleDelete(id: number) {
-    if (!confirm("Delete this bill? This cannot be undone.")) return;
-    const res = await fetch(`/api/bills/${id}`, { method: "DELETE" });
-    if (res.ok) {
-      setViewingId(null);
-      load();
+  async function confirmDeleteBill(bill: Bill): Promise<string | null> {
+    const res = await fetch(`/api/bills/${bill.id}`, { method: "DELETE" });
+    if (!res.ok) {
+      const data = await parseJson<{ error?: string }>(res);
+      return data?.error || "Could not delete the bill.";
     }
+    setViewingId(null);
+    load();
+    return null;
   }
 
-  async function handleDeleteAll() {
-    const label = type === "SALE" ? "sale" : "purchase";
-    if (!confirm(`Delete every ${label} bill? This cannot be undone.`)) return;
+  function openDeleteAll() {
+    setDeleteAllSummary(undefined);
+    setDeleteAllOpen(true);
+    fetchJson<Bill[]>(`/api/bills?type=${type}`)
+      .then((data) =>
+        setDeleteAllSummary(
+          Array.isArray(data)
+            ? { count: data.length, total: data.reduce((s, b) => s + b.total, 0) }
+            : null
+        )
+      )
+      .catch(() => setDeleteAllSummary(null));
+  }
+
+  async function confirmDeleteAll(): Promise<string | null> {
     const res = await fetch(`/api/bills?type=${type}`, { method: "DELETE" });
-    if (res.ok) load();
+    if (!res.ok) {
+      const data = await parseJson<{ error?: string }>(res);
+      return data?.error || "Could not delete the bills.";
+    }
+    load();
+    return null;
   }
 
   function handleView(id: number) {
@@ -330,6 +357,14 @@ export default function BillsRegister({ type }: { type: "SALE" | "PURCHASE" }) {
     editingBill !== undefined &&
     new Date(editingBill.updatedAt).getTime() - new Date(editingBill.createdAt).getTime() > 1000;
 
+  // What a delete does, in the register's own terms: stock is worked out from bills, so removing
+  // one puts the quantities back the other way.
+  const deleteStockEffect =
+    type === "SALE"
+      ? "The quantities sold go back into stock."
+      : "The quantities purchased are taken back out of stock.";
+  const billTypeWord = type === "SALE" ? "sale" : "purchase";
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -344,7 +379,7 @@ export default function BillsRegister({ type }: { type: "SALE" | "PURCHASE" }) {
         />
         <button
           type="button"
-          onClick={handleDeleteAll}
+          onClick={openDeleteAll}
           className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition-colors"
         >
           Delete All Bills
@@ -391,7 +426,7 @@ export default function BillsRegister({ type }: { type: "SALE" | "PURCHASE" }) {
       <Card className="overflow-hidden">
         <TableScroll>
           <table className={tableClass}>
-          <thead className="bg-gray-50 text-gray-500">
+          <thead className="bg-sky-50 text-sky-700">
             <tr>
               <th className="text-left font-semibold px-4 py-3">Bill #</th>
               <th className="text-left font-semibold px-4 py-3">Account</th>
@@ -412,7 +447,7 @@ export default function BillsRegister({ type }: { type: "SALE" | "PURCHASE" }) {
               bills.map((b) => (
                 <tr
                   key={b.id}
-                  className="border-t border-gray-100 hover:bg-gray-50 cursor-pointer"
+                  className="border-t border-sky-100 hover:bg-sky-50 cursor-pointer"
                   onClick={() => handleView(b.id)}
                 >
                   <td className="px-4 py-3 font-medium text-gray-900">#{b.billNo}</td>
@@ -420,7 +455,7 @@ export default function BillsRegister({ type }: { type: "SALE" | "PURCHASE" }) {
                   <td className="px-4 py-3">
                     <span
                       className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                        b.mode === "CASH" ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"
+                        b.mode === "CASH" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
                       }`}
                     >
                       {b.mode === "CASH" ? "Cash" : "Credit"}
@@ -439,7 +474,7 @@ export default function BillsRegister({ type }: { type: "SALE" | "PURCHASE" }) {
                         e.stopPropagation();
                         handleView(b.id);
                       }}
-                      className="rounded-lg text-gray-600 hover:bg-gray-100 px-2 py-1 text-sm font-medium transition-colors"
+                      className="rounded-lg text-gray-600 hover:bg-sky-100 px-2 py-1 text-sm font-medium transition-colors"
                     >
                       View
                     </button>
@@ -449,14 +484,14 @@ export default function BillsRegister({ type }: { type: "SALE" | "PURCHASE" }) {
                         e.stopPropagation();
                         handleEdit(b);
                       }}
-                      className="rounded-lg text-blue-600 hover:bg-blue-50 px-2 py-1 text-sm font-medium transition-colors"
+                      className="rounded-lg text-blue-600 hover:bg-sky-50 px-2 py-1 text-sm font-medium transition-colors"
                     >
                       Edit
                     </button>
                     <DangerButton
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDelete(b.id);
+                        setDeletingBill(b);
                       }}
                     >
                       Delete
@@ -497,27 +532,27 @@ export default function BillsRegister({ type }: { type: "SALE" | "PURCHASE" }) {
               <button
                 type="button"
                 onClick={() => setViewingId(null)}
-                className="rounded-lg px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors"
+                className="rounded-lg px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-sky-100 transition-colors"
               >
                 Close
               </button>
               <button
                 type="button"
                 onClick={() => handleEdit(viewingBill)}
-                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-sky-50 transition-colors"
               >
                 Edit
               </button>
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-sky-50 transition-colors"
               >
                 Reprint
               </button>
               <button
                 type="button"
-                onClick={() => handleDelete(viewingBill.id)}
+                onClick={() => setDeletingBill(viewingBill)}
                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition-colors"
               >
                 Void Bill
@@ -527,7 +562,7 @@ export default function BillsRegister({ type }: { type: "SALE" | "PURCHASE" }) {
         >
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200 text-xs font-semibold uppercase tracking-wide text-gray-500">
+              <tr className="border-b border-sky-100 text-xs font-semibold uppercase tracking-wide text-gray-500">
                 <th className="py-2 text-left">Item</th>
                 <th className="py-2 pl-3 text-right">Qty</th>
                 <th className="py-2 pl-3 text-right">Price</th>
@@ -536,7 +571,7 @@ export default function BillsRegister({ type }: { type: "SALE" | "PURCHASE" }) {
             </thead>
             <tbody>
               {viewingBill.items.map((it) => (
-                <tr key={it.id} className="border-b border-gray-100">
+                <tr key={it.id} className="border-b border-sky-100">
                   <td className="py-2.5 text-gray-900">{it.item.name}</td>
                   <td className="py-2.5 pl-3 text-right whitespace-nowrap text-gray-700">
                     {it.qty} <span className="text-xs text-gray-400">{it.item.unit}</span>
@@ -572,7 +607,7 @@ export default function BillsRegister({ type }: { type: "SALE" | "PURCHASE" }) {
           </div>
 
           {type === "SALE" && (
-            <div className="mt-5 rounded-lg bg-gray-50 px-4 py-3 text-sm print:hidden">
+            <div className="mt-5 rounded-lg bg-sky-50 px-4 py-3 text-sm print:hidden">
               <div className="flex items-center justify-between py-0.5 text-gray-500">
                 <span>Sale Amount</span>
                 <span className="text-gray-900">{formatMoney(viewingBill.total)}</span>
@@ -581,7 +616,7 @@ export default function BillsRegister({ type }: { type: "SALE" | "PURCHASE" }) {
                 <span>Cost Amount</span>
                 <span className="text-gray-900">{formatMoney(viewingCost)}</span>
               </div>
-              <div className="mt-1 flex items-center justify-between border-t border-gray-200 pt-2">
+              <div className="mt-1 flex items-center justify-between border-t border-sky-100 pt-2">
                 <span className="font-semibold text-gray-900">Profit</span>
                 <span
                   className={`font-bold ${viewingProfit >= 0 ? "text-green-600" : "text-red-600"}`}
@@ -620,7 +655,7 @@ export default function BillsRegister({ type }: { type: "SALE" | "PURCHASE" }) {
           footer={
             <>
               {editError && (
-                <div className="mb-2 rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">{editError}</div>
+                <div className="mb-2 rounded-md bg-rose-50 px-3 py-2 text-xs text-red-700">{editError}</div>
               )}
               <div className="flex items-center justify-between gap-3">
                 <span
@@ -632,7 +667,7 @@ export default function BillsRegister({ type }: { type: "SALE" | "PURCHASE" }) {
                   <button
                     type="button"
                     onClick={cancelEdit}
-                    className="rounded-lg border border-gray-300 bg-white px-3.5 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="rounded-lg border border-gray-300 bg-white px-3.5 py-1.5 text-sm font-semibold text-gray-700 hover:bg-sky-50 transition-colors"
                   >
                     Cancel
                   </button>
@@ -699,10 +734,10 @@ export default function BillsRegister({ type }: { type: "SALE" | "PURCHASE" }) {
                   + Add Item
                 </button>
               </div>
-              <div className="overflow-hidden rounded-lg border border-gray-200">
+              <div className="overflow-hidden rounded-lg border border-sky-100">
                 <TableScroll>
                   <table className="w-full min-w-120 text-sm">
-                    <thead className="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    <thead className="bg-sky-50 text-xs font-semibold uppercase tracking-wide text-sky-700">
                       <tr>
                         <th className="px-2.5 py-1.5 text-left">Item</th>
                         <th className="w-20 px-2.5 py-1.5 text-right">Qty</th>
@@ -718,7 +753,7 @@ export default function BillsRegister({ type }: { type: "SALE" | "PURCHASE" }) {
                         const edited = isRowEdited(row);
                         const added = !row.orig;
                         return (
-                          <tr key={row.key} className="border-t border-gray-100 align-top">
+                          <tr key={row.key} className="border-t border-sky-100 align-top">
                             <td
                               className={`border-l-2 px-2.5 py-1.5 ${
                                 edited
@@ -797,7 +832,7 @@ export default function BillsRegister({ type }: { type: "SALE" | "PURCHASE" }) {
 
             <section>
               <SectionTitle>Summary</SectionTitle>
-              <div className="rounded-lg bg-gray-50 px-3.5 py-2.5 text-sm">
+              <div className="rounded-lg bg-sky-50 px-3.5 py-2.5 text-sm">
                 <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-4 gap-y-1">
                   <span></span>
                   <span className="text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -871,7 +906,7 @@ export default function BillsRegister({ type }: { type: "SALE" | "PURCHASE" }) {
                   )}
                 </div>
 
-                <div className="mt-2.5 space-y-0.5 border-t border-gray-200 pt-2 text-xs text-gray-500">
+                <div className="mt-2.5 space-y-0.5 border-t border-sky-100 pt-2 text-xs text-gray-500">
                   {editEditedCount + editAddedCount + editRemoved.length === 0 ? (
                     <div>No item changes</div>
                   ) : (
@@ -900,6 +935,91 @@ export default function BillsRegister({ type }: { type: "SALE" | "PURCHASE" }) {
             </section>
           </div>
         </Modal>
+      )}
+
+      {deletingBill && (
+        <ConfirmDeleteModal
+          title={`Delete ${typeLabel} Bill`}
+          subtitle={`#${deletingBill.billNo}`}
+          message={`You are about to permanently delete ${billTypeWord} bill #${deletingBill.billNo}.`}
+          details={[
+            { label: "Bill", value: `#${deletingBill.billNo}` },
+            { label: "Date", value: deletingBill.date.slice(0, 10) },
+            { label: "Account", value: deletingBill.account?.name || "Walk-in" },
+            { label: "Payment", value: deletingBill.mode === "CASH" ? "Cash" : "Credit" },
+            { label: "Total", value: formatMoney(deletingBill.total) },
+            ...(deletingBill.total - deletingBill.paidAmount > 0
+              ? [{ label: "Amount Due", value: formatMoney(deletingBill.total - deletingBill.paidAmount) }]
+              : []),
+          ]}
+          effects={[
+            deleteStockEffect,
+            ...(deletingBill.account
+              ? [
+                  `The bill's total is taken out of ${deletingBill.account.name}'s ledger, so the account balance is recalculated.`,
+                ]
+              : []),
+            ...(deletingBill.mode === "CASH" ? ["The cash amount is removed from the cash book."] : []),
+            "The bill no longer counts in reports.",
+          ]}
+          onConfirm={() => confirmDeleteBill(deletingBill)}
+          onClose={() => setDeletingBill(null)}
+        >
+          <SectionTitle className="mb-1 mt-4">Items</SectionTitle>
+          <table className="w-full text-xs">
+            <tbody>
+              {deletingBill.items.map((it) => (
+                <tr key={it.id} className="border-b border-sky-100 text-gray-700">
+                  <td className="py-1.5 pr-2">{it.item.name}</td>
+                  <td className="whitespace-nowrap py-1.5 pr-2 text-right">
+                    {it.qty} <span className="text-gray-400">{it.item.unit}</span>
+                  </td>
+                  <td className="whitespace-nowrap py-1.5 text-right">{formatMoney(it.subtotal)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </ConfirmDeleteModal>
+      )}
+
+      {deleteAllOpen && (
+        <ConfirmDeleteModal
+          title={`Delete All ${typeLabel} Bills`}
+          message={
+            deleteAllSummary?.count === 0
+              ? `There are no ${billTypeWord} bills to delete.`
+              : `You are about to permanently delete every ${billTypeWord} bill, not just the ones listed on screen.`
+          }
+          confirmLabel="Delete All"
+          confirmDisabled={deleteAllSummary === undefined || deleteAllSummary?.count === 0}
+          details={[
+            {
+              label: "Bills to delete",
+              value:
+                deleteAllSummary === undefined
+                  ? "Counting..."
+                  : deleteAllSummary === null
+                    ? "Unavailable"
+                    : deleteAllSummary.count,
+            },
+            {
+              label: "Combined total",
+              value:
+                deleteAllSummary === undefined
+                  ? "Counting..."
+                  : deleteAllSummary === null
+                    ? "Unavailable"
+                    : formatMoney(deleteAllSummary.total),
+            },
+          ]}
+          effects={[
+            "This ignores the date filter. Bills from every date are deleted.",
+            deleteStockEffect,
+            "Account ledgers, the cash book and reports are recalculated without these bills.",
+          ]}
+          onConfirm={confirmDeleteAll}
+          onClose={() => setDeleteAllOpen(false)}
+        />
       )}
     </div>
   );

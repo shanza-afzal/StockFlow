@@ -42,18 +42,25 @@ export default function SalesReportsPage() {
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-            <StatCard label="Total Sales" value={formatMoney(data.totalSales)} sub={`${data.billCount} bill(s)`} />
+            <StatCard
+              label="Total Sales"
+              value={formatMoney(data.totalSales)}
+              sub={`${data.billCount} bill(s)`}
+              accent="sky"
+            />
             <StatCard
               label="Credit Sales"
               value={formatMoney(data.creditSales)}
               sub={`${data.creditBills.length} bill(s)`}
+              accent="rose"
             />
             <StatCard
               label="Cash Sales"
               value={formatMoney(data.cashSales)}
               sub={`${data.cashBills.length} bill(s)`}
+              accent="emerald"
             />
-            <StatCard label="Total Cost" value={formatMoney(data.totalCost)} />
+            <StatCard label="Total Cost" value={formatMoney(data.totalCost)} accent="amber" />
             <StatCard label="Total Profit" value={formatMoney(data.totalProfit)} tone="green" />
           </div>
 
@@ -79,7 +86,7 @@ export default function SalesReportsPage() {
           />
 
           <Card className="overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-100 font-semibold text-gray-900">
+            <div className="px-4 py-3 border-b border-sky-100 font-semibold text-gray-900">
               Product Wise Sale
             </div>
             {data.byItem.length === 0 ? (
@@ -87,7 +94,7 @@ export default function SalesReportsPage() {
             ) : (
               <TableScroll>
                 <table className={tableClass}>
-                  <thead className="bg-gray-50 text-gray-500">
+                  <thead className="bg-sky-50 text-sky-700">
                     <tr>
                       <th className="text-left font-semibold px-4 py-3">Product</th>
                       <th className="text-right font-semibold px-4 py-3">Qty Sold</th>
@@ -98,7 +105,7 @@ export default function SalesReportsPage() {
                   </thead>
                   <tbody>
                     {data.byItem.map((r) => (
-                      <tr key={r.name} className="border-t border-gray-100">
+                      <tr key={r.name} className="border-t border-sky-100">
                         <td className="px-4 py-3 font-medium text-gray-900">{r.name}</td>
                         <td className="px-4 py-3 text-right text-gray-600">
                           {formatQty(r.qty)} {r.unit}
@@ -111,7 +118,7 @@ export default function SalesReportsPage() {
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot className="bg-gray-50 border-t border-gray-200 font-semibold text-gray-900">
+                  <tfoot className="bg-sky-50 border-t border-sky-100 font-semibold text-gray-900">
                     <tr>
                       <td className="px-4 py-3" colSpan={2}>
                         Total · {data.byItem.length} product(s)

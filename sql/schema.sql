@@ -1,4 +1,4 @@
--- Safi ERP — PostgreSQL schema
+-- PostgreSQL schema
 --
 -- Matches prisma/schema.prisma exactly, so pointing DATABASE_URL at a database
 -- created with this script works with the app as-is (after switching the
@@ -108,7 +108,7 @@ CREATE TABLE "AmountEntry" (
 
 CREATE TABLE "Settings" (
     "id" SERIAL NOT NULL,
-    "companyName" TEXT NOT NULL DEFAULT 'Safi ERP',
+    "companyName" TEXT NOT NULL DEFAULT '',
     "currency" TEXT NOT NULL DEFAULT 'Rs.',
     "address" TEXT,
     "phone" TEXT,
@@ -155,4 +155,4 @@ ALTER TABLE "AmountEntry" ADD CONSTRAINT "AmountEntry_toAccountId_fkey" FOREIGN 
 -- Starting data ---------------------------------------------------------
 
 INSERT INTO "Settings" ("companyName", "currency", "nextSaleNo", "nextPurchNo")
-VALUES ('Safi ERP', 'Rs.', 1, 1);
+VALUES ('', 'Rs.', 1, 1);

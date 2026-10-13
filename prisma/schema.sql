@@ -1,4 +1,4 @@
--- Safi ERP database schema (SQLite)
+-- Database schema (SQLite)
 -- Generated from the live dev.db — this is the exact DDL Prisma applied.
 -- Source of truth is prisma/schema.prisma; regenerate this file after
 -- schema changes with: npx prisma db push  (then re-dump sqlite_master).
@@ -78,7 +78,7 @@ CREATE INDEX "AmountEntry_toAccountId_idx" ON "AmountEntry"("toAccountId");
 
 CREATE TABLE "Settings" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "companyName" TEXT NOT NULL DEFAULT 'Safi ERP',
+    "companyName" TEXT NOT NULL DEFAULT '',
     "currency" TEXT NOT NULL DEFAULT 'Rs.',
     "address" TEXT,
     "phone" TEXT,

@@ -46,8 +46,8 @@ export default function AccountHistory({ accountId }: { accountId: string }) {
       <PageHeader title={account ? account.name : "Account History"} />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <StatCard label="Credit (جمع)" value={formatMoney(totalCredit)} />
-        <StatCard label="Debit (باقی)" value={formatMoney(totalDebit)} />
+        <StatCard label="Credit (جمع)" value={formatMoney(totalCredit)} accent="emerald" />
+        <StatCard label="Debit (باقی)" value={formatMoney(totalDebit)} accent="rose" />
         <StatCard
           label="Net Balance"
           value={formatMoney(Math.abs(balance))}
@@ -64,7 +64,7 @@ export default function AccountHistory({ accountId }: { accountId: string }) {
         ) : (
           <TableScroll>
             <table className={tableClass}>
-            <thead className="bg-gray-50 text-gray-500">
+            <thead className="bg-sky-50 text-sky-700">
               <tr>
                 <th className="text-left font-semibold px-4 py-3">Date</th>
                 <th className="text-left font-semibold px-4 py-3">Details</th>
@@ -75,7 +75,7 @@ export default function AccountHistory({ accountId }: { accountId: string }) {
             </thead>
             <tbody>
               {rows.map((r, i) => (
-                <tr key={i} className="border-t border-gray-100">
+                <tr key={i} className="border-t border-sky-100">
                   <td className="px-4 py-3 text-gray-600">{new Date(r.date).toLocaleDateString()}</td>
                   <td className="px-4 py-3 text-gray-900">{r.description}</td>
                   <td className="px-4 py-3 text-right text-gray-700">

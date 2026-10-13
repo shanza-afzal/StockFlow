@@ -29,7 +29,11 @@ export default function ReportBillsSection({
 
   return (
     <Card className="overflow-hidden mb-6">
-      <div className="px-4 py-3 border-b border-gray-100 flex flex-wrap items-center justify-between gap-2">
+      <div
+        className={`px-4 py-3 border-b flex flex-wrap items-center justify-between gap-2 bg-linear-to-r to-white ${
+          tone === "red" ? "border-rose-100 from-rose-50" : "border-emerald-100 from-emerald-50"
+        }`}
+      >
         <span className={`font-semibold ${tone === "red" ? "text-red-600" : "text-green-600"}`}>{title}</span>
         <span className="text-sm text-gray-500">
           {bills.length} bill(s) · {formatMoney(totalAmount)}
@@ -40,7 +44,7 @@ export default function ReportBillsSection({
       ) : (
         <TableScroll>
           <table className={tableClass}>
-            <thead className="bg-gray-50 text-gray-500">
+            <thead className="bg-sky-50 text-sky-700">
               <tr>
                 <th className="text-left font-semibold px-4 py-3">Bill #</th>
                 {showDate && <th className="text-left font-semibold px-4 py-3">Date</th>}
@@ -56,7 +60,7 @@ export default function ReportBillsSection({
             </thead>
             <tbody>
               {bills.map((b) => (
-                <tr key={b.id} className="border-t border-gray-100">
+                <tr key={b.id} className="border-t border-sky-100">
                   <td className="px-4 py-3 font-medium text-gray-900">#{b.billNo}</td>
                   {showDate && <td className="px-4 py-3 text-gray-600">{b.date}</td>}
                   <td className="px-4 py-3 text-gray-600">{b.account || "Walk-in"}</td>
@@ -72,7 +76,7 @@ export default function ReportBillsSection({
                 </tr>
               ))}
             </tbody>
-            <tfoot className="bg-gray-50 border-t border-gray-200 font-semibold text-gray-900">
+            <tfoot className="bg-sky-50 border-t border-sky-100 font-semibold text-gray-900">
               <tr>
                 <td colSpan={labelSpan} className="px-4 py-3">
                   Total · {bills.length} bill(s)

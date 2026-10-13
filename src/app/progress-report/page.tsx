@@ -80,8 +80,8 @@ function ProfitHero({ title, caption, data }: { title: string; caption: string; 
           <div className="text-xs text-gray-500 mt-0.5">{caption}</div>
         </div>
         {hasActivity && (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600">
-            <span className={`h-1.5 w-1.5 rounded-full ${loss ? "bg-red-500" : "bg-emerald-500"}`} />
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-100 px-2.5 py-1 text-xs font-medium text-gray-600">
+            <span className={`h-1.5 w-1.5 rounded-full ${loss ? "bg-rose-500" : "bg-emerald-500"}`} />
             {loss ? "Loss" : "Profit"}
           </span>
         )}
@@ -91,7 +91,7 @@ function ProfitHero({ title, caption, data }: { title: string; caption: string; 
         {formatMoney(data.netProfit)}
       </div>
 
-      <dl className="mt-5 grid grid-cols-2 divide-x divide-gray-100 border-t border-gray-100 pt-4 text-sm">
+      <dl className="mt-5 grid grid-cols-2 divide-x divide-sky-100 border-t border-sky-100 pt-4 text-sm">
         <div className="pr-4">
           <dt className="text-xs text-gray-500">Sales Profit</dt>
           <dd className="mt-0.5 font-semibold text-gray-900 break-all">{formatMoney(data.salesProfit)}</dd>
@@ -104,8 +104,8 @@ function ProfitHero({ title, caption, data }: { title: string; caption: string; 
 
       {hasActivity && (
         <div className="mt-4">
-          <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
-            <div className="h-full rounded-full bg-gray-800" style={{ width: `${kept}%` }} />
+          <div className="h-1.5 rounded-full bg-sky-100 overflow-hidden">
+            <div className="h-full rounded-full bg-sky-500" style={{ width: `${kept}%` }} />
           </div>
           <div className="text-xs text-gray-500 mt-2">{verdict}</div>
         </div>
@@ -132,7 +132,7 @@ function MetricCard({
       <div className={`text-2xl font-semibold mt-2 break-all ${negative ? "text-red-600" : "text-gray-900"}`}>
         {value}
       </div>
-      <div className="mt-3 border-t border-gray-100 pt-3 flex flex-col gap-0.5">
+      <div className="mt-3 border-t border-sky-100 pt-3 flex flex-col gap-0.5">
         {lines.map((line) => (
           <div key={line} className="text-xs text-gray-500">
             {line}
@@ -198,7 +198,7 @@ export default function ProgressReportPage() {
         title="Progress Report"
         actions={
           data && (
-            <span className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-600">
+            <span className="rounded-lg border border-sky-100 bg-white px-3 py-1.5 text-sm text-gray-600">
               {formatLongDate(data.date)}
             </span>
           )
@@ -226,7 +226,7 @@ export default function ProgressReportPage() {
               <ProfitVsExpenseRow heading="Since the start" prefix="Total" s={data.allTime} />
             </div>
             {data.allTime.expenseCount === 0 && (
-              <p className="text-xs text-gray-500 mt-3 rounded-lg bg-gray-50 border border-gray-200 px-4 py-3">
+              <p className="text-xs text-gray-500 mt-3 rounded-lg bg-sky-50 border border-sky-100 px-4 py-3">
                 No expenses have been recorded yet. To record one, go to{" "}
                 <Link href="/amount-entry" className="font-semibold text-blue-600 hover:underline">
                   Amount Entry
@@ -259,11 +259,17 @@ export default function ProgressReportPage() {
                 <Card className="p-6">
                   <div className="font-semibold text-gray-900 mb-4">Business Activity</div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <StatCard label="Sales" value={formatMoney(period.sales)} sub={plural(period.saleBillCount, "bill")} />
+                    <StatCard
+                      label="Sales"
+                      value={formatMoney(period.sales)}
+                      sub={plural(period.saleBillCount, "bill")}
+                      accent="emerald"
+                    />
                     <StatCard
                       label="Purchases"
                       value={formatMoney(period.purchases)}
                       sub={plural(period.purchaseBillCount, "bill")}
+                      accent="violet"
                     />
                     <StatCard
                       label="Sales Profit"
@@ -276,6 +282,7 @@ export default function ProgressReportPage() {
                       label="Expenses"
                       value={formatMoney(period.expenses)}
                       sub={plural(period.expenseCount, "payment")}
+                      accent="amber"
                     />
                     <StatCard
                       label="Net Profit"
@@ -289,8 +296,8 @@ export default function ProgressReportPage() {
                 <Card className="p-6">
                   <div className="font-semibold text-gray-900 mb-4">Cash Flow</div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <StatCard label="Cash In" value={formatMoney(period.cashIn)} />
-                    <StatCard label="Cash Out" value={formatMoney(period.cashOut)} />
+                    <StatCard label="Cash In" value={formatMoney(period.cashIn)} accent="emerald" />
+                    <StatCard label="Cash Out" value={formatMoney(period.cashOut)} accent="rose" />
                     <StatCard
                       label="Net Cash Flow"
                       value={formatMoney(period.netCashFlow)}
@@ -302,8 +309,8 @@ export default function ProgressReportPage() {
                 <Card className="p-6">
                   <div className="font-semibold text-gray-900 mb-4">Outstanding (as of today)</div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <StatCard label="Receivable" value={formatMoney(data.receivable)} />
-                    <StatCard label="Payable" value={formatMoney(data.payable)} />
+                    <StatCard label="Receivable" value={formatMoney(data.receivable)} accent="emerald" />
+                    <StatCard label="Payable" value={formatMoney(data.payable)} accent="rose" />
                   </div>
                 </Card>
               </div>

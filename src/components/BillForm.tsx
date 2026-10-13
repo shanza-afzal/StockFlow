@@ -309,7 +309,7 @@ export default function BillForm({ type }: { type: "SALE" | "PURCHASE" }) {
       <Card className="overflow-hidden">
         <TableScroll>
           <table className={tableClass}>
-          <thead className="bg-gray-50 text-gray-500">
+          <thead className="bg-sky-50 text-sky-700">
             <tr>
               <th className="text-left font-semibold px-4 py-3">Item</th>
               <th className="text-right font-semibold px-4 py-3 w-24">Qty</th>
@@ -323,7 +323,7 @@ export default function BillForm({ type }: { type: "SALE" | "PURCHASE" }) {
               const qty = Number(row.qty) || 0;
               const price = Number(row.price) || 0;
               return (
-                <tr key={row.key} className="border-t border-gray-100">
+                <tr key={row.key} className="border-t border-sky-100">
                   <td className="px-4 py-2">
                     <select
                       ref={(el) => {
@@ -400,7 +400,7 @@ export default function BillForm({ type }: { type: "SALE" | "PURCHASE" }) {
           <button
             type="button"
             onClick={addRow}
-            className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-sky-50"
           >
             Add Item
           </button>
@@ -450,7 +450,7 @@ export default function BillForm({ type }: { type: "SALE" | "PURCHASE" }) {
             <span>Cost Amount</span>
             <span className="font-medium text-gray-900">{formatMoney(costAmount)}</span>
           </div>
-          <div className="flex justify-between items-center py-1 border-t border-gray-100 mt-1 pt-2">
+          <div className="flex justify-between items-center py-1 border-t border-sky-100 mt-1 pt-2">
             <span className="font-bold text-gray-900">Profit</span>
             <span className={`font-bold text-lg ${profit >= 0 ? "text-green-600" : "text-red-600"}`}>
               {formatMoney(profit)}
@@ -460,10 +460,10 @@ export default function BillForm({ type }: { type: "SALE" | "PURCHASE" }) {
       )}
 
       {error && (
-        <div className="rounded-lg bg-red-50 text-red-700 text-sm px-4 py-3">{error}</div>
+        <div className="rounded-lg bg-rose-50 text-red-700 text-sm px-4 py-3">{error}</div>
       )}
       {success && (
-        <div className="rounded-lg bg-green-50 text-green-700 text-sm px-4 py-3">{success}</div>
+        <div className="rounded-lg bg-emerald-50 text-green-700 text-sm px-4 py-3">{success}</div>
       )}
 
       <div className="flex justify-end">
