@@ -78,6 +78,12 @@ function isRowEdited(r: EditRow) {
   );
 }
 
+// Sale profit uses the cost price saved on each line when the bill was made, so later changes to
+// an item's purchase price don't rewrite old bills.
+function billCost(bill: Bill) {
+  return bill.items.reduce((sum, it) => sum + it.qty * it.costPrice, 0);
+}
+
 function signedMoney(n: number) {
   if (Math.abs(n) < 0.005) return "—";
   return `${n > 0 ? "+" : "−"}${formatMoney(Math.abs(n))}`;
@@ -308,6 +314,7 @@ export default function BillsRegister({ type }: { type: "SALE" | "PURCHASE" }) {
   const totalAmount = bills.reduce((s, b) => s + b.total, 0);
   const totalDue = bills.reduce((s, b) => s + (b.total - b.paidAmount), 0);
 
+  const showProfit = type === "SALE";
   const typeLabel = type === "SALE" ? "Sale" : "Purchase";
   const paidLabel = type === "SALE" ? "Amount Received" : "Amount Paid";
   const viewingBill = viewingId !== null ? bills.find((b) => b.id === viewingId) : undefined;
@@ -316,9 +323,7 @@ export default function BillsRegister({ type }: { type: "SALE" | "PURCHASE" }) {
     viewingBill !== undefined &&
     new Date(viewingBill.updatedAt).getTime() - new Date(viewingBill.createdAt).getTime() > 1000;
   const viewingDue = viewingBill ? viewingBill.total - viewingBill.paidAmount : 0;
-  const viewingCost = viewingBill
-    ? viewingBill.items.reduce((sum, it) => sum + it.qty * it.costPrice, 0)
-    : 0;
+  const viewingCost = viewingBill ? billCost(viewingBill) : 0;
   const viewingProfit = viewingBill ? viewingBill.total - viewingCost : 0;
 
   // What the edit popup compares against: the bill as saved ("before") vs the draft ("after").
@@ -340,9 +345,7 @@ export default function BillsRegister({ type }: { type: "SALE" | "PURCHASE" }) {
     ? editingBill.items.filter((it) => !editRows.some((r) => r.orig?.billItemId === it.id))
     : [];
   const beforeDue = editingBill ? editingBill.total - editingBill.paidAmount : 0;
-  const beforeCost = editingBill
-    ? editingBill.items.reduce((sum, it) => sum + it.qty * it.costPrice, 0)
-    : 0;
+  const beforeCost = editingBill ? billCost(editingBill) : 0;
   const beforeProfit = editingBill ? editingBill.total - beforeCost : 0;
   const editDirty =
     editingBill !== undefined &&
@@ -433,13 +436,14 @@ export default function BillsRegister({ type }: { type: "SALE" | "PURCHASE" }) {
               <th className="text-left font-semibold px-4 py-3">Type</th>
               <th className="text-right font-semibold px-4 py-3">Total</th>
               <th className="text-right font-semibold px-4 py-3">Due</th>
+              {showProfit && <th className="text-right font-semibold px-4 py-3">Profit</th>}
               <th className="w-16"></th>
             </tr>
           </thead>
           <tbody>
             {loading || bills.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-4 text-sm text-gray-500">
+                <td colSpan={showProfit ? 7 : 6} className="px-4 py-4 text-sm text-gray-500">
                   {loading ? "Loading..." : emptyMessage}
                 </td>
               </tr>
@@ -467,6 +471,15 @@ export default function BillsRegister({ type }: { type: "SALE" | "PURCHASE" }) {
                   <td className="px-4 py-3 text-right text-blue-600 font-medium">
                     {formatMoney(b.total - b.paidAmount)}
                   </td>
+                  {showProfit && (
+                    <td
+                      className={`px-4 py-3 text-right font-medium ${
+                        b.total - billCost(b) >= 0 ? "text-green-600" : "text-red-600"
+                      }`}
+                    >
+                      {formatMoney(b.total - billCost(b))}
+                    </td>
+                  )}
                   <td className="px-4 py-3 text-right whitespace-nowrap">
                     <button
                       type="button"
